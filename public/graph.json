@@ -1,0 +1,14 @@
+{
+  "nodes": [
+    {"name": "Hello", "group": 1, "size": 500},
+    {"name": "World", "group": 1, "size": 700},
+    {"name": "Test", "group": 2, "size": 200},
+    {"name": "123", "group": 2, "size": 500}
+  ],
+  "links": [
+    {"source": 0, "target": 1},
+    {"source": 0, "target": 2},
+    {"source": 2, "target": 3},
+    {"source": 3, "target": 0}
+  ]
+}

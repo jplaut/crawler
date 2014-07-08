@@ -1,0 +1,12 @@
+.link {
+  stroke: #ccc;
+}
+
+.nodetext {
+  display: none;
+}
+
+.node:hover .nodetext {
+  display: block;
+}
+
