@@ -7,39 +7,56 @@ Grapher.prototype.graph = function(selector, w, h, data) {
 
   var force = d3.layout.force()
     .gravity(.05)
-    .distance(100)
+    .distance(200)
     .charge(-100)
     .size([w, h]);
 
-  var color = function(d) {
-    return d._children ? "#3182bd" : d.children ? "#c6dbef" : "#fd8d3c";
-  }
-
   var links = [];
   var nodes = [];
-  var validFields = ['scripts', 'styles', 'images'];
+  var parentNodes = {};
+  var childNodeSize = 1000;
+  var parentNodeSize = 20000;
+  var childNodeStroke = 1;
+  var parentNodeStroke = 3;
+  var fields = ['scripts', 'styles', 'images'];
 
   $.each(data, function(parentIndex, parentNode) {
+    var sourceIndex = nodes.length ? nodes.length : 0;
+    parentNodes[parentNode.path] = sourceIndex;
+
     if (parentNode.redirect) {
-      nodes.push({path: parentNode.path, color: 'red', size: 5000});
-      nodes.push({path: parentNode.redirect, color: 'yellow', size: 2000});
-      links.push({source: nodes.length - 2, target: nodes.length - 1});
+      nodes.push({path: parentNode.path, color: 'red', size: parentNodeSize});
+      nodes.push({path: parentNode.redirect, color: 'yellow', size: childNodeSize});
+      links.push({source: sourceIndex, target: nodes.length - 1, stroke: childNodeStroke});
     } else {
-      nodes.push({path: parentNode.path, size: 5000, color: 'green'});
-      var sourceIndex = nodes.length - 1;
+      nodes.push({path: parentNode.path, size: parentNodeSize, color: 'green'});
       $.each(parentNode.scripts, function(i, v) {
-        nodes.push({path: v, size: 2000, color: 'blue'});
-        links.push({source: sourceIndex, target: nodes.length - 1});
+        nodes.push({path: v, size: childNodeSize, color: 'blue'});
+        links.push({source: sourceIndex, target: nodes.length - 1, stroke: childNodeStroke});
       });
       $.each(parentNode.styles, function(i, v) {
-        nodes.push({path: v, size: 2000, color: 'orange'});
-        links.push({source: sourceIndex, target: nodes.length - 1});
+        nodes.push({path: v, size: childNodeSize, color: 'orange'});
+        links.push({source: sourceIndex, target: nodes.length - 1, stroke: childNodeStroke});
       });
       $.each(parentNode.images, function(i, v) {
-        nodes.push({path: v, size: 2000, color: 'grey'});
-        links.push({source: sourceIndex, target: nodes.length - 1});
+        nodes.push({path: v, size: childNodeSize, color: 'grey'});
+        links.push({source: sourceIndex, target: nodes.length - 1, stroke: childNodeStroke});
       });
     }
+  });
+
+  $.each(data, function(i, parentNode) {
+    var parentIndex = parentNodes[parentNode.path];
+
+    if (!parentNode.links) return true;
+    $.each(parentNode.links, function(linkIndex, link) {
+      var childIndex = parentNodes[link];
+      if (parentIndex == childIndex) return true;
+
+      if (Object.keys(parentNodes).indexOf(link) != -1) {
+        links.push({source: childIndex, target: parentIndex, stroke: parentNodeStroke});
+      }
+    });
   });
 
   force
@@ -50,7 +67,8 @@ Grapher.prototype.graph = function(selector, w, h, data) {
   var link = svg.selectAll(".link")
     .data(links)
   .enter().append("line")
-    .attr("class", "link");
+    .attr("class", "link")
+    .style('stroke-width', function(d) { return d.stroke; });
 
   var node = svg.selectAll(".node")
     .data(nodes)
